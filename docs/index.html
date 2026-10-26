@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CSCE 412 | Project 4 Design</title><link rel="stylesheet" href="style.css"></head>
+<body><main><header><p class="brand">STATERA FORGE · CSCE 412</p><h1>Project 4: Load Balancer</h1>
+<p>A clock-driven simulation of requests, workers, and changing capacity.</p></header>
+<section><h2>System design</h2><div class="flow" aria-label="Request workflow">
+<div>Configuration + user input</div><span>↓</span><div>Main: finite simulation loop</div><span>↓</span>
+<div>Persistent random generator → Request</div><span>↓</span><div>Validate fields + source-IP firewall</div>
+<span>↓ accepted &nbsp; / &nbsp; rejected → counters</span><div>FIFO waiting queue</div><span>↓ idle worker available</span>
+<div>WebServer: one request + countdown</div><span>↓ countdown reaches zero</span>
+<div>Completed counter + server available</div></div></section>
+<section><h2>One simulation cycle</h2><ol><li>Dispatch waiting requests to idle servers.</li>
+<li>Advance active requests one cycle and count completions.</li><li>Randomly generate a new batch and queue accepted requests.</li>
+<li>At the scaling interval, compare waiting work with the live server count.</li></ol>
+<p>Requests assigned at the start of a cycle process immediately. Arrivals at the end wait for the next cycle.
+At the time limit, waiting and active work remain unfinished and appear in the summary.</p></section>
+<section><h2>Scaling policy</h2><p>Above 80 requests per server, allocate one additional server.
+Below 50 per server, remove one idle server. Keep at least one server. If every server is busy,
+postpone removal. Wait the configured interval between checks.</p></section>
+<section><h2>Class responsibilities</h2><dl><dt>Request</dt><dd>Source IP, destination IP, required cycles, and P/S job type.</dd>
+<dt>WebServer</dt><dd>Current request, busy state, and remaining cycles.</dd>
+<dt>LoadBalancer</dt><dd>Owns the queue, workers, random engine, clock, firewall admission, scaling, and statistics.</dd>
+<dt>main.cpp</dt><dd>Reads settings into ordinary variables, gets user input, and controls arrivals and scaling.</dd></dl></section>
+<section><h2>Evidence and reporting</h2><p>Quiet mode shows starting/ending summaries. Verbose mode adds useful events.
+The same messages are saved to a plain-text log. Accepted work must equal completed work plus queued work plus work in progress.</p>
+<p><a href="generated/html/index.html">Doxygen API documentation</a> · <a href="design/index.html">Statera Forge design document</a> · <a href="reports/20servers-100000cycles.log">Required simulation log</a></p></section>
+</main></body></html>

@@ -1,0 +1,9 @@
+LB
+*.o
+tests/test_simulation
+simulation.log
+project4-source.zip
+project4-website.zip
+docs/generated/
+upload/
+*-BrittonXPS*

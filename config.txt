@@ -1,0 +1,16 @@
+# NAME=value or NAME value. Paths cannot contain spaces.
+NUMBER_OF_WEBSERVERS=20
+TOTAL_CYCLES=100000
+CYCLES_BETWEEN_UPDATES=10
+# Percent chance of an arrival batch per cycle.
+REQUEST_FREQUENCY=25
+BATCH_MIN=1
+BATCH_MAX=10
+TASK_MIN=1
+TASK_MAX=50
+# Inclusive source-IP range; none or 0 disables blocking.
+BLOCKED_IPS=10.0.0.0-10.255.255.255
+RANDOM_SEED=42
+MODE=quiet
+COLOR=0
+LOG_FILE=simulation.log

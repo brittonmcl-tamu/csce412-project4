@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Statera Forge load-balancer design: a flow diagram and an explanation of the simulation workflow.">
+  <meta name="theme-color" content="#292522">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+  <title>Statera Forge | Design Submission</title>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to document</a>
+  <header class="masthead">
+    <span class="brand">STATERA <span>FORGE</span></span>
+    <span class="project">PROJECT 04 / DESIGN DOCUMENT</span>
+  </header>
+  <main id="main" tabindex="-1">
+    <div class="intro">
+      <div>
+        <p class="eyebrow">FORGED FOR BALANCE.</p>
+        <h1>Load balancer design.</h1>
+        <p class="lead">A C++ simulation that distributes incoming requests across a changing pool of web servers.</p>
+      </div>
+      <img src="assets/statera-forge-logo.png" width="1536" height="1024" alt="Statera Forge: an anvil with a flame and a copper path branching to three servers.">
+    </div>
+
+    <section aria-labelledby="workflow-heading" id="workflow">
+      <p class="eyebrow">01 / FLOW DIAGRAM</p>
+      <h2 id="workflow-heading">How requests move through the system.</h2>
+      <figure class="diagram">
+          <div class="diagram-tools"><span id="diagram-help" class="diagram-hint">Scroll sideways to view the full diagram.</span><a href="assets/workflow.svg">Open full-size diagram</a></div>
+          <div class="diagram-scroll" role="region" aria-label="Scrollable request-flow diagram" aria-describedby="diagram-help" tabindex="0"><svg viewBox="0 0 900 480" role="img" aria-labelledby="flow-title flow-desc" xmlns="http://www.w3.org/2000/svg">
+            <title id="flow-title">Request flow through Statera Forge</title>
+            <desc id="flow-desc">Randomly generated requests pass through an IP range blocker. Blocked requests are counted and rejected. Accepted requests enter a FIFO queue. The load balancer assigns queued requests to three representative web servers. Completed requests contribute to statistics and a final summary. The load balancer owns the queue and servers. Each server becomes available after completing a request. A scaling policy adjusts the pool based on queue size.</desc>
+            <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="#9c4a27"/></marker></defs>
+            <g class="flow-line" marker-end="url(#arrow)"><path d="M181 151H224"/><path d="M383 151H426"/><path d="M591 151H634"/><path d="M303 120V53H182"/><path d="M714 181V218H160V272"/><path d="M714 218H450V272"/><path d="M714 218H740V272"/><path d="M160 335V383H450V411"/><path d="M450 335V411"/><path d="M740 335V383H450" marker-end="none"/></g>
+            <rect x="23" y="120" width="158" height="62" rx="6" class="svg-box"/><text x="102" y="145" class="svg-title">Request generator</text><text x="102" y="165" class="svg-small">IP in/out · time · P/S</text>
+            <rect x="224" y="120" width="159" height="62" rx="6" class="svg-box"/><text x="303" y="145" class="svg-title">IP range blocker</text><text x="303" y="165" class="svg-small">Check source IP</text>
+            <rect x="426" y="120" width="165" height="62" rx="6" class="svg-box"/><text x="508" y="145" class="svg-title">Request queue</text><text x="508" y="165" class="svg-small">FIFO · waiting jobs</text>
+            <rect x="634" y="120" width="160" height="62" rx="6" class="svg-dark"/><text x="714" y="145" class="svg-title svg-light">Load balancer</text><text x="714" y="165" class="svg-small svg-light">Owns queue &amp; servers</text>
+            <text x="405" y="140" class="svg-label">PASS</text><text x="337" y="92" class="svg-label">BLOCK</text>
+            <rect x="23" y="26" width="158" height="54" rx="6" class="svg-reject"/><text x="102" y="49" class="svg-title">Reject & count</text><text x="102" y="68" class="svg-small">Never enter the queue</text>
+            <rect x="85" y="273" width="150" height="62" rx="6" class="svg-box"/><text x="160" y="298" class="svg-title">Web server 1</text><text x="160" y="319" class="svg-small">One job; then ready again</text>
+            <rect x="375" y="273" width="150" height="62" rx="6" class="svg-box"/><text x="450" y="298" class="svg-title">Web server 2</text><text x="450" y="319" class="svg-small">One job; then ready again</text>
+            <rect x="665" y="273" width="150" height="62" rx="6" class="svg-box"/><text x="740" y="298" class="svg-title">Web server N</text><text x="740" y="319" class="svg-small">One job; then ready again</text>
+            <rect x="554" y="26" width="300" height="54" rx="6" class="svg-box"/><text x="704" y="49" class="svg-title">Scaling policy</text><text x="704" y="68" class="svg-small">Queue size + cooldown → pool size</text><path d="M714 80V115" class="flow-line dashed" marker-end="url(#arrow)"/>
+            <rect x="294" y="412" width="312" height="50" rx="6" class="svg-dark"/><text x="450" y="442" class="svg-title svg-light">Completed requests → logs & summary</text>
+          </svg></div>
+          <figcaption><span>FIG. 01</span> Requests pass through IP filtering and a shared queue before being assigned to available servers. The server pool expands or shrinks with demand.</figcaption>
+        </figure>
+    </section>
+
+    <section class="description" aria-labelledby="description-heading">
+      <p class="eyebrow">02 / DESCRIPTION</p>
+      <h2 id="description-heading">How it works.</h2>
+      <p>The simulation starts by reading the configuration and asking the user for the initial number of servers and the number of clock cycles to run. The load balancer creates the server pool and fills the queue with 100 accepted requests per starting server. Each request contains randomly generated incoming and outgoing IP addresses, a random positive integer processing time, and a job type: processing (P) or streaming (S).</p>
+      <p>The diagram shows the path each generated request follows. The IP range blocker checks the incoming address first. Blocked requests are rejected and counted; accepted requests enter a first-in, first-out queue. The load balancer owns the queue and server pool and assigns the oldest waiting request to an available web server. Each server handles one request at a time, advances its processing by one unit per clock cycle, and becomes available again when the request is complete. New requests arrive randomly while the simulation runs. Both job types use the same queue and server pool.</p>
+      <p>The scaling policy adjusts capacity based on the number of waiting requests. If the queue rises above 80 times the number of servers, the load balancer adds one server. If it falls below 50 times the number of servers, it removes one idle server while retaining at least one server in the pool. If all servers are busy, removal waits until one becomes idle. At either threshold boundary, the server count stays the same. After a change, the system waits a configurable number of cycles before checking again. At the requested end time, it stops and writes a summary of completed requests, remaining work, rejected requests, and server changes.</p>
+    </section>
+  </main>
+  <footer><span class="brand">STATERA <span>FORGE</span></span><span>Forged for balance.</span></footer>
+</body>
+</html>
